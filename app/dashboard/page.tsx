@@ -1,0 +1,17 @@
+import { fetchRevenue } from "../lib/data";
+import { lusitana } from "../ui/fonts";
+
+export default async function DashboardPage() {
+  const revenue = await fetchRevenue();
+  console.log(revenue);
+  return (
+    <main>
+      <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
+        Dashboard
+      </h1>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+
+      </div>
+    </main>
+  );
+}

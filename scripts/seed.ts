@@ -1,10 +1,11 @@
 import bcrypt from 'bcrypt';
-import postgres from 'postgres';
+import { neon } from '@neondatabase/serverless';
 import { invoices, customers, revenue, users } from '../lib/placeholder-data';
 
-const sql = postgres(process.env.DATABASE_URL!, { ssl: false });
+const sql = neon(process.env.POSTGRES_URL!);
 
 async function seedUsers() {
+  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
   await sql`
     CREATE TABLE IF NOT EXISTS users (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -29,6 +30,8 @@ async function seedUsers() {
 }
 
 async function seedInvoices() {
+  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
   await sql`
     CREATE TABLE IF NOT EXISTS invoices (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -53,6 +56,8 @@ async function seedInvoices() {
 }
 
 async function seedCustomers() {
+  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
   await sql`
     CREATE TABLE IF NOT EXISTS customers (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -98,31 +103,13 @@ async function seedRevenue() {
 
 export async function GET() {
   try {
-    console.log('🔄 Starting database seeding...');
-    console.log('Database URL:', process.env.DATABASE_URL);
-    
-    // Prueba la conexión primero
-    await sql`SELECT 1`;
-    console.log('✅ Database connection successful');
+    await seedUsers();
+    await seedCustomers();
+    await seedInvoices();
+    await seedRevenue();
 
-    // Crear la extensión UUID una sola vez al inicio
-    await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-    console.log('✅ UUID extension ready');
-
-    const result = await sql.begin((sql) => [
-      seedUsers(),
-      seedCustomers(),
-      seedInvoices(),
-      seedRevenue(),
-    ]);
-
-    console.log('✅ All tables seeded successfully');
     return Response.json({ message: 'Database seeded successfully' });
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
-    return Response.json({ 
-      error: 'Database seeding failed', 
-      details: String(error) 
-    }, { status: 500 });
+    return Response.json({ error }, { status: 500 });
   }
 }
